@@ -8,7 +8,6 @@ from model.integrityentry import IntegrityEntry
 from model.integrityfile import IntegrityFile
 from flac.flacoperation import FlacOperation
 
-
     # ANCIENNETÉ + MAX=100  --> ANCIENNETÉ  
     # ANCIENNETÉ + MIN=0    --> ANCIENNETÉ
     # Tous les fichiers dépassant l'ancienneté sont vérifiés
@@ -24,6 +23,11 @@ from flac.flacoperation import FlacOperation
     # 
     # ANCIENNETÉ + MIN=100  --> MIN=100
     # Tous les fichiers sont vérifiés
+
+
+DATE_FORMAT         = "%Y-%m-%d %H:%M:%S"
+DATE_UNDEFINED_VAL  = datetime(1900, 1, 1)
+
 
 def init_logging():
     logging.root.setLevel(logging.DEBUG)
@@ -111,7 +115,7 @@ def get_integrity_entries(folder: str, report_file: str):
                     ieb.set_file_path(file_path)
                     ieb.set_file_size(os.path.getsize(file_path))
                     ieb.set_file_modtime(os.path.getmtime(file_path))
-                    ieb.set_date_checked("1900-01-01 00:00:00")
+                    ieb.set_date_checked(DATE_UNDEFINED_VAL.strftime(DATE_FORMAT))
 
                     ieb_list.append(ieb)
 
@@ -151,7 +155,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
             if int(age) >= 0:
                 limit_age = datetime.today() - timedelta(minutes=int(age))
             else:
-                limit_age = datetime(1900, 1, 1)
+                limit_age = DATE_UNDEFINED_VAL
         
         limit_item = None
         if percentage is not None and int(percentage) >= 0:
@@ -166,10 +170,10 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         for file in integrity_entries:
 
             if os.path.exists(file.get_file_path()):
-                if (file.get_date_checked() <= limit_age.strftime("%Y-%m-%d %H:%M:%S") or \
+                if (    (file.get_date_checked() <= limit_age.strftime(DATE_FORMAT)) or \
                         (percentage_threshold is not None and percentage_threshold == 'MIN' \
                             and limit_item is not None and i < limit_item)):
-                    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    now = datetime.now().strftime(DATE_FORMAT)
 
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
                     if flac_op.test():
