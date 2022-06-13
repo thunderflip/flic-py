@@ -1,12 +1,12 @@
 import getopt
+import logging
 import os
-import re
-import subprocess
 import sys
 from datetime import datetime, timedelta
 
 from model.integrityentry import IntegrityEntry
 from model.integrityfile import IntegrityFile
+from flac.flacoperation import FlacOperation
 
 
     # ANCIENNETÉ + MAX=100  --> ANCIENNETÉ  
@@ -25,14 +25,24 @@ from model.integrityfile import IntegrityFile
     # ANCIENNETÉ + MIN=100  --> MIN=100
     # Tous les fichiers sont vérifiés
 
+def init_logging():
+    logging.root.setLevel(logging.DEBUG)
+
+    # Add console handler
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter('%(asctime)s [%(levelname)8s] %(message)s')
+    handler.setFormatter(formatter)
+    logging.root.addHandler(handler)
+
+
 def usage(argv_0, exit_val):
 
     print("FLAC Integrity Checker\n")
 
     print("A Python script for FLAC integrity check.\n")
-    print("Usage: %s [-h] --flac <flac-path> --folder <folder-path> --report <report-path> [--age <number-minutes>] [--min-percentage <number-percentage> || --max-percentage <number-percentage>]" % argv_0)
+    print("Usage: %s [-h  || --help] --flac <flac-path> --folder <folder-path> --report <report-path> [--age <number-minutes>] [--min-percentage <number-percentage> || --max-percentage <number-percentage>]" % argv_0)
 
-    print("\t-h / --help        :    Show this help.")
+    print("\t-h / --help        :    This help.")
     print("\t--flac             :    Path to the 'flac' executable.")    
     print("\t--folder           :    Root folder path for recursive search.")
     print("\t--report           :    Path to the 'report' file.")
@@ -53,32 +63,31 @@ def main(argv):
     percentage_limit = None
 
     try:
-        opts, args = getopt.getopt(argv[1:], '', ['help', 'folder=', 'flac=', 'report=', 'age=', 'min-percentage=', 'max-percentage='])
+        opts, args = getopt.getopt(argv[1:], 'h', ['help', 'folder=', 'flac=', 'report=', 'age=', 'min-percentage=', 'max-percentage='])
 
-        if len(argv) >= 1:
-            for opt, arg in opts:
-                if opt in ("-h", "--help"):
-                    usage(argv[0], 0)
-                elif opt == "--folder":
-                    folder = arg
-                elif opt == "--flac":
-                    flac_path = arg
-                elif opt == "--report":
-                    report_file = arg
-                elif opt == "--age":
-                    age = arg
-                elif opt == "--min-percentage":
-                    if (percentage_limit is not None):
-                        sys.exit(-1)                    
-                    percentage = arg
-                    percentage_limit = 'MIN'
-                elif opt == "--max-percentage":
-                    if (percentage_limit is not None):
-                        sys.exit(-1)                    
-                    percentage = arg
-                    percentage_limit = 'MAX'
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                usage(argv[0], 0)
+            elif opt == "--folder":
+                folder = arg
+            elif opt == "--flac":
+                flac_path = arg
+            elif opt == "--report":
+                report_file = arg
+            elif opt == "--age":
+                age = arg
+            elif opt == "--min-percentage":
+                if (percentage_limit is not None):
+                    sys.exit(-1)                    
+                percentage = arg
+                percentage_limit = 'MIN'
+            elif opt == "--max-percentage":
+                if (percentage_limit is not None):
+                    sys.exit(-1)                    
+                percentage = arg
+                percentage_limit = 'MAX'
 
-            check(flac_path, folder, report_file, age, percentage, percentage_limit)
+        check(flac_path, folder, report_file, age, percentage, percentage_limit)
 
     except getopt.GetoptError as ex:
         usage(argv[0], 2)
@@ -90,7 +99,7 @@ def get_integrity_entries(folder: str, report_file: str):
     if folder is not None:
         ieb_list = list()
 
-        # lister les fichiers
+        # List files
         for root, dirs, files in os.walk(folder):
             for file in files:
                 file_name, file_extension = os.path.splitext(file)
@@ -114,7 +123,7 @@ def get_integrity_entries(folder: str, report_file: str):
             for integrity_entry in ier_list:
                 ier_dict[integrity_entry.get_file_path()] = integrity_entry
 
-        for ieb in ieb_list: #type: IntegrityEntry
+        for ieb in ieb_list:
             ie_new = ieb
             if ieb.get_file_path() in ier_dict:
                 ier = ier_dict[ieb.get_file_path()]
@@ -162,31 +171,14 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                             and limit_item is not None and i < limit_item)):
                     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                    cmd = [flac_path, '-V', file.get_file_path(), '-t']
-                    proc_encode = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-                    (cmd_out, cmd_err) = proc_encode.communicate()
-                    if proc_encode.returncode != 0:
-                        cmd_err = cmd_err.strip()
-                        print(cmd_err)
-                        sys.exit(-3)
+                    flac_op = FlacOperation(flac_path, None, file.get_file_path())
+                    if flac_op.test():
+                        print("OK: " + file.get_file_path())
+                        file.set_date_checked(now)
                     else:
-                        cmd_err = cmd_err.strip()
-                        if cmd_err is not None:
-                            r = cmd_err.split("\n")
-                            if r is None:
-                                print("FLAC output not found")
-                                sys.exit(-3)
-                            r = r[len(r) - 1]
-                            m = re.match(r'.*ok', r)
-                            if m is None:
-                                print("FLAC verification failed")
-                                sys.exit(-3)
-
-                            print("OK: " + file.get_file_path())
-                            file.set_date_checked(now)
-                        else:
-                            print("FLAC output expected")
-                            sys.exit(-3)
+                        print("KO: " + file.get_file_path())
+                        print("FLAC verification failed")
+                        sys.exit(-3)
 
                     i = i + 1                
                     if (percentage_threshold is not None and percentage_threshold == 'MAX' \
