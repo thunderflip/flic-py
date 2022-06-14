@@ -101,7 +101,13 @@ def get_integrity_entries(folder: str, report_file: str):
 
     integrity_entries = list()
     if folder is not None:
-        ieb_list = list()
+        intergity_file = IntegrityFile(report_file)
+        ier_list = intergity_file.entries
+
+        ier_dict = dict()
+        if ier_list is not None:
+            for integrity_entry in ier_list:
+                ier_dict[integrity_entry.get_file_path()] = integrity_entry        
 
         # List files
         for root, dirs, files in os.walk(folder):
@@ -117,25 +123,14 @@ def get_integrity_entries(folder: str, report_file: str):
                     ieb.set_file_modtime(os.path.getmtime(file_path))
                     ieb.set_date_checked(DATE_UNDEFINED_VAL.strftime(DATE_FORMAT))
 
-                    ieb_list.append(ieb)
+                    ie_new = ieb
+                    if ieb.get_file_path() in ier_dict:
+                        ier = ier_dict[ieb.get_file_path()]
+                        if ier.get_file_size() == str(ieb.get_file_size()):
+                            if ier.get_file_modtime() == str(ieb.get_file_modtime()):
+                                ie_new = ier
 
-        intergity_file = IntegrityFile(report_file)
-        ier_list = intergity_file.entries
-
-        ier_dict = dict()
-        if ier_list is not None:
-            for integrity_entry in ier_list:
-                ier_dict[integrity_entry.get_file_path()] = integrity_entry
-
-        for ieb in ieb_list:
-            ie_new = ieb
-            if ieb.get_file_path() in ier_dict:
-                ier = ier_dict[ieb.get_file_path()]
-                if ier.get_file_size() == str(ieb.get_file_size()):
-                    if ier.get_file_modtime() == str(ieb.get_file_modtime()):
-                        ie_new = ier
-
-            integrity_entries.append(ie_new)
+                    integrity_entries.append(ie_new)
 
     return integrity_entries
 
