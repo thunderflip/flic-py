@@ -145,27 +145,29 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
     if len(integrity_entries) <= 0:
         print("NFO         : no entry, nothing will be done")
     else: 
-        limit_age = datetime.today()
+        limit_age = None
         if age is not None:
             if int(age) >= 0:
-                limit_age = datetime.today() - timedelta(minutes=int(age))
-            else:
+                limit_age = datetime.now() - timedelta(minutes=int(age))
+            elif int(age) == -1:
                 limit_age = DATE_UNDEFINED_VAL
+            elif int(age) == -2:
+                limit_age = datetime.today()
+            print("LIMIT AGE   : " + limit_age.strftime("%Y-%m-%d %H:%M:%S"))                
         
         limit_item = None
         if percentage is not None and int(percentage) >= 0:
             limit_item = round(len(integrity_entries) * int(percentage) / 100)
+            print("LIMIT ITEM  : " + str(limit_item) + " " + str(percentage_threshold))            
 
         limit_auto_save = len(integrity_entries) / 100
-
-        print("LIMIT AGE   : " + limit_age.strftime("%Y-%m-%d %H:%M:%S"))
-        print("LIMIT ITEM  : " + str(limit_item) + " " + str(percentage_threshold))
 
         i = 0
         for file in integrity_entries:
 
             if os.path.exists(file.get_file_path()):
-                if (    (file.get_date_checked() <= limit_age.strftime(DATE_FORMAT)) or \
+                if (    (limit_age is not None
+                            and file.get_date_checked() <= limit_age.strftime(DATE_FORMAT)) or \
                         (percentage_threshold is not None and percentage_threshold == 'MIN' \
                             and limit_item is not None and i < limit_item)):
                     now = datetime.now().strftime(DATE_FORMAT)
