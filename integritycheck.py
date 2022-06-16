@@ -79,17 +79,30 @@ def main(argv):
             elif opt == "--report":
                 report_file = arg
             elif opt == "--age":
-                age = arg
+                try:
+                    age = int(arg)
+                except:
+                    print("NFO         : 'age' isn't defined to an accepted value")
+                    print("NFO         : 'age' must be an integer")
+                    age = None
             elif opt == "--min-percentage":
-                if (percentage_limit is not None):
-                    sys.exit(-1)                    
-                percentage = arg
-                percentage_limit = 'MIN'
+                try:
+                    if (percentage_limit is not None):
+                        sys.exit(-1)
+                    percentage = int(arg)
+                    percentage_limit = 'MIN'
+                except:
+                    print("NFO         : 'min-percentage' isn't defined to an accepted value")
+                    print("NFO         : 'min-percentage' must be an integer")
             elif opt == "--max-percentage":
-                if (percentage_limit is not None):
-                    sys.exit(-1)                    
-                percentage = arg
-                percentage_limit = 'MAX'
+                try:                
+                    if (percentage_limit is not None):
+                        sys.exit(-1)
+                    percentage = int(arg)
+                    percentage_limit = 'MAX'
+                except:
+                    print("NFO         : 'max-percentage' isn't defined to an accepted value")
+                    print("NFO         : 'max-percentage' must be an integer")
 
         check(flac_path, folder, report_file, age, percentage, percentage_limit)
 
@@ -147,17 +160,17 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
     else: 
         limit_age = None
         if age is not None:
-            if int(age) >= 0:
-                limit_age = datetime.now() - timedelta(minutes=int(age))
-            elif int(age) == -1:
+            if age >= 0:
+                limit_age = datetime.now() - timedelta(minutes=age)
+            elif age == -1:
                 limit_age = DATE_UNDEFINED_VAL
-            elif int(age) == -2:
+            elif age == -2:
                 limit_age = datetime.today()
             print("LIMIT AGE   : " + limit_age.strftime("%Y-%m-%d %H:%M:%S"))                
         
         limit_item = None
-        if percentage is not None and int(percentage) >= 0:
-            limit_item = round(len(integrity_entries) * int(percentage) / 100)
+        if percentage is not None and percentage > 0:
+            limit_item = round(len(integrity_entries) * percentage / 100)
             print("LIMIT ITEM  : " + str(limit_item) + " " + str(percentage_threshold))            
 
         limit_auto_save = len(integrity_entries) / 100
