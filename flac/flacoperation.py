@@ -10,7 +10,6 @@ class FlacOperation:
 
     def __init__(self, flac_path, metadata_path, file):
         self.log = logging.getLogger('FlacOperation')
-        self.log.setLevel(logging.INFO)
 
         self.flac_path = flac_path
         self.metaflac_path = metadata_path

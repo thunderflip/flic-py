@@ -28,36 +28,40 @@ from flac.flacoperation import FlacOperation
 DATE_FORMAT         = "%Y-%m-%d %H:%M:%S"
 DATE_UNDEFINED_VAL  = datetime(1900, 1, 1)
 
+LOG                 = None
+
 
 def init_logging():
-    logging.root.setLevel(logging.DEBUG)
+    logging.root.setLevel(logging.INFO)
 
     # Add console handler
     handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter('%(asctime)s [%(levelname)8s] %(message)s')
+    formatter = logging.Formatter('[%(asctime)s] [%(levelname)-8s] [%(filename)-20s%(lineno)-3s] %(message)s')
     handler.setFormatter(formatter)
     logging.root.addHandler(handler)
 
 
 def usage(argv_0, exit_val):
 
-    print("FLAC Integrity Checker\n")
+    print("FLAC Collection Integrity Checker\n")
 
-    print("A Python script for FLAC integrity check.\n")
+    print("A python script to check FLAC integrity\n")
     print("Usage: %s [-h  || --help] --flac <flac-path> --folder <folder-path> --report <report-path> [--age <number-minutes>] [--min-percentage <number-percentage> || --max-percentage <number-percentage>]" % argv_0)
 
-    print("\t-h / --help        :    This help.")
-    print("\t--flac             :    Path to the 'flac' executable.")    
-    print("\t--folder           :    Root folder path for recursive search.")
-    print("\t--report           :    Path to the 'report' file.")
-    print("\t--age              :    Age minimum since last check.")
-    print("\t--min-percentage   :    Minimum percentage to check.")
-    print("\t--max-percentage   :    Maximum percentage to check.")
+    print("\t-h / --help        :    This HELP.")
+    print("\t--flac             :    Path to the FLAC executable.")    
+    print("\t--folder           :    Root FOLDER path for recursive search.")
+    print("\t--report           :    Path to the REPORT file.")
+    print("\t--age              :    AGE minimum since last check.")
+    print("\t--min-percentage   :    MINimum PERCENTAGE to check.")
+    print("\t--max-percentage   :    MAXimum PERCENTAGE to check.")
 
     sys.exit(exit_val)  
   
 
 def main(argv):
+
+    global LOG 
 
     flac_path = None
     folder = None
@@ -67,6 +71,9 @@ def main(argv):
     percentage_limit = None
 
     try:
+        init_logging()        
+        LOG = logging.getLogger('IntegrityCheck')
+
         opts, args = getopt.getopt(argv[1:], 'h', ['help', 'folder=', 'flac=', 'report=', 'age=', 'min-percentage=', 'max-percentage='])
 
         for opt, arg in opts:
@@ -82,27 +89,29 @@ def main(argv):
                 try:
                     age = int(arg)
                 except:
-                    print("NFO         : 'age' isn't defined to an accepted value")
-                    print("NFO         : 'age' must be an integer")
+                    LOG.warning("Option 'age' must be an integer")
+                    LOG.warning("No value will be used for this option")
                     age = None
             elif opt == "--min-percentage":
                 try:
                     if (percentage_limit is not None):
+                        LOG.critical("A 'xxx-percentage' argument has already been provided")
                         sys.exit(-1)
                     percentage = int(arg)
                     percentage_limit = 'MIN'
                 except:
-                    print("NFO         : 'min-percentage' isn't defined to an accepted value")
-                    print("NFO         : 'min-percentage' must be an integer")
+                    LOG.warning("Option 'min-percentage' must be an integer")
+                    LOG.warning("No value will be used for this option")
             elif opt == "--max-percentage":
                 try:                
                     if (percentage_limit is not None):
+                        LOG.critical("A 'xxx-percentage' option has already been provided")
                         sys.exit(-1)
                     percentage = int(arg)
                     percentage_limit = 'MAX'
                 except:
-                    print("NFO         : 'max-percentage' isn't defined to an accepted value")
-                    print("NFO         : 'max-percentage' must be an integer")
+                    LOG.warning("Option 'max-percentage' must be an integer")
+                    LOG.warning("No value will be used for this option")
 
         check(flac_path, folder, report_file, age, percentage, percentage_limit)
 
@@ -120,7 +129,7 @@ def get_integrity_entries(folder: str, report_file: str):
         ier_dict = dict()
         if ier_list is not None:
             for integrity_entry in ier_list:
-                ier_dict[integrity_entry.get_file_path()] = integrity_entry        
+                ier_dict[integrity_entry.get_file_path()] = integrity_entry
 
         # List files
         for root, dirs, files in os.walk(folder):
@@ -150,13 +159,13 @@ def get_integrity_entries(folder: str, report_file: str):
 
 def check(flac_path, folder, report_file, age, percentage, percentage_threshold):
 
-    print("BEG         : " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    LOG.critical("BEG - Check")
 
     integrity_entries = get_integrity_entries(folder, report_file)
     integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
 
     if len(integrity_entries) <= 0:
-        print("NFO         : no entry, nothing will be done")
+        LOG.warning("No entry, nothing will be done")
     else: 
         limit_age = None
         if age is not None:
@@ -166,12 +175,12 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                 limit_age = DATE_UNDEFINED_VAL
             elif age == -2:
                 limit_age = datetime.today()
-            print("LIMIT AGE   : " + limit_age.strftime("%Y-%m-%d %H:%M:%S"))                
+            LOG.info("Age limit: " + limit_age.strftime("%Y-%m-%d %H:%M:%S"))
         
         limit_item = None
         if percentage is not None and percentage > 0:
             limit_item = round(len(integrity_entries) * percentage / 100)
-            print("LIMIT ITEM  : " + str(limit_item) + " " + str(percentage_threshold))            
+            LOG.info("Item limit: " + str(limit_item) + " " + str(percentage_threshold))
 
         limit_auto_save = len(integrity_entries) / 100
 
@@ -186,29 +195,29 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                     now = datetime.now().strftime(DATE_FORMAT)
 
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
+                    LOG.info("Verifying: '" + file.get_file_path() + "'")
                     if flac_op.test():
-                        print("OK: " + file.get_file_path())
                         file.set_date_checked(now)
                     else:
-                        print("KO: " + file.get_file_path())
-                        print("FLAC verification failed")
+                        LOG.critical("KO")
                         sys.exit(-3)
 
-                    i = i + 1                
+                    i = i + 1
                     if (percentage_threshold is not None and percentage_threshold == 'MAX' \
                             and limit_item is not None and i > limit_item):
-                        print("ITEM MAX reached")
+                        LOG.info("Max items reached")
                         break
 
                     if limit_auto_save > 0 and i % limit_auto_save == 0:
                         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
                 else:
+                    LOG.info("There are no more items satisfying 'age' or 'min-percentage' conditions")
                     break
 
         integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
     
-    print("END         : " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    LOG.critical("END - Check")
 
 if __name__ == "__main__":
     main(sys.argv)
