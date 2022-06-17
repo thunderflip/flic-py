@@ -1,5 +1,6 @@
 import getopt
 import logging
+import math
 import os
 import sys
 from datetime import datetime, timedelta
@@ -187,7 +188,12 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
             limit_item = round(len(integrity_entries) * percentage / 100)
             LOG.info("Item limit: " + str(limit_item) + " " + str(percentage_threshold))
 
-        limit_auto_save = len(integrity_entries) / 100
+        limit_auto_save = None
+        if limit_item is not None:
+            limit_auto_save = limit_item // 10
+        else:
+            limit_auto_save = len(integrity_entries) // 10
+        limit_auto_save = max(limit_auto_save, 50)
 
         for file in integrity_entries:
 
@@ -222,7 +228,6 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
     
     LOG.critical("END - Check")
-    sys.exit(i)
 
 if __name__ == "__main__":
     main(sys.argv)
