@@ -25,10 +25,14 @@ from flac.flacoperation import FlacOperation
     # Tous les fichiers sont vérifiés
 
 
-DATE_FORMAT         = "%Y-%m-%d %H:%M:%S"
-DATE_UNDEFINED_VAL  = datetime(1900, 1, 1)
+DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S"
+DATE_UNDEFINED_VAL          = datetime(1900, 1, 1)
 
-LOG                 = None
+EXIT_CODE_OK                =  0
+EXIT_CODE_ERR_OPTION        = -1
+EXIT_CODE_ERR_VALIDATION    = -2
+
+LOG                         = None
 
 
 def init_logging():
@@ -78,7 +82,7 @@ def main(argv):
 
         for opt, arg in opts:
             if opt in ("-h", "--help"):
-                usage(argv[0], 0)
+                usage(argv[0], EXIT_CODE_OK)
             elif opt == "--folder":
                 folder = arg
             elif opt == "--flac":
@@ -96,7 +100,7 @@ def main(argv):
                 try:
                     if (percentage_limit is not None):
                         LOG.critical("A 'xxx-percentage' argument has already been provided")
-                        sys.exit(-1)
+                        sys.exit(EXIT_CODE_ERR_OPTION)
                     percentage = int(arg)
                     percentage_limit = 'MIN'
                 except:
@@ -106,7 +110,7 @@ def main(argv):
                 try:                
                     if (percentage_limit is not None):
                         LOG.critical("A 'xxx-percentage' option has already been provided")
-                        sys.exit(-1)
+                        sys.exit(EXIT_CODE_ERR_OPTION)
                     percentage = int(arg)
                     percentage_limit = 'MAX'
                 except:
@@ -116,7 +120,7 @@ def main(argv):
         check(flac_path, folder, report_file, age, percentage, percentage_limit)
 
     except getopt.GetoptError as ex:
-        usage(argv[0], 2)
+        usage(argv[0], EXIT_CODE_ERR_OPTION)
 
 
 def get_integrity_entries(folder: str, report_file: str):
@@ -161,6 +165,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
 
     LOG.critical("BEG - Check")
 
+    i = 0
     integrity_entries = get_integrity_entries(folder, report_file)
     integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
 
@@ -184,7 +189,6 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
 
         limit_auto_save = len(integrity_entries) / 100
 
-        i = 0
         for file in integrity_entries:
 
             if os.path.exists(file.get_file_path()):
@@ -200,7 +204,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                         file.set_date_checked(now)
                     else:
                         LOG.critical("KO")
-                        sys.exit(-3)
+                        sys.exit(EXIT_CODE_ERR_VALIDATION)
 
                     i = i + 1
                     if (percentage_threshold is not None and percentage_threshold == 'MAX' \
@@ -218,6 +222,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
     
     LOG.critical("END - Check")
+    sys.exit(i)
 
 if __name__ == "__main__":
     main(sys.argv)
