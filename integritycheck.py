@@ -174,8 +174,8 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         LOG.warning("No entry, nothing will be done")
     else:
         limit_by_age = None
-        limit_age_date = None
         if age is not None:
+            limit_age_date = None
             if age >= 0:
                 limit_age_date = datetime.now() - timedelta(minutes=age)
             elif age == -1:
