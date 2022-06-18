@@ -201,12 +201,12 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
             limit = limit_by_age
             if limit_by_percentage is not None:
                 if percentage_threshold == 'MIN':
-                    limit = max(limit_by_age, limit_by_percentage)
                     if (limit_by_age < limit_by_percentage):
+                        limit = limit_by_percentage
                         LOG.info("Limit item by age changed by limit by percentage from " + str(limit_by_age) + " to " + str(limit_by_percentage))
                 elif percentage_threshold == 'MAX':
-                    limit = min(limit_by_age, limit_by_percentage)
                     if (limit_by_age > limit_by_percentage):
+                        limit = limit_by_percentage
                         LOG.info("Limit item by age changed by limit by percentage from " + str(limit_by_age) + " to " + str(limit_by_percentage))
         elif limit_by_percentage is not None:
             if percentage_threshold == 'MIN':
@@ -218,24 +218,23 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
 
         i = 0
         for file in integrity_entries:
-            if os.path.exists(file.get_file_path()):
-                if (i < limit):
-                    now = datetime.now().strftime(DATE_FORMAT)
-
+            if (i < limit):
+                if os.path.exists(file.get_file_path()):
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
-                    LOG.info("Verifying: '" + file.get_file_path() + "'")
+                    LOG.info("Verifying: " + file.get_file_path())
                     if flac_op.test():
+                        now = datetime.now().strftime(DATE_FORMAT)
                         file.set_date_checked(now)
                     else:
                         LOG.critical("KO")
                         sys.exit(EXIT_CODE_ERR_VALIDATION)
 
-                    i = i + 1
-                    if limit_auto_save > 0 and i % limit_auto_save == 0:
-                        IntegrityFile.write_integrity_entries(integrity_entries, report_file)
-                else:
-                    LOG.info("There are no more items satisfying 'age' or 'percentage' conditions")
-                    break
+                i = i + 1
+                if limit_auto_save > 0 and i % limit_auto_save == 0:
+                    IntegrityFile.write_integrity_entries(integrity_entries, report_file)
+            else:
+                LOG.info("There are no more items satisfying 'age' or 'percentage' conditions")
+                break
 
         integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
