@@ -1,6 +1,6 @@
+import bisect
 import getopt
 import logging
-import math
 import os
 import sys
 from datetime import datetime, timedelta
@@ -28,6 +28,7 @@ from flac.flacoperation import FlacOperation
 
 DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S"
 DATE_UNDEFINED_VAL          = datetime(1900, 1, 1)
+DATE_UNDEFINED_VAL_STR      = DATE_UNDEFINED_VAL.strftime(DATE_FORMAT)
 
 EXIT_CODE_OK                =  0
 EXIT_CODE_ERR_OPTION        = -1
@@ -148,7 +149,7 @@ def get_integrity_entries(folder: str, report_file: str):
                     ieb.set_file_path(file_path)
                     ieb.set_file_size(os.path.getsize(file_path))
                     ieb.set_file_modtime(os.path.getmtime(file_path))
-                    ieb.set_date_checked(DATE_UNDEFINED_VAL.strftime(DATE_FORMAT))
+                    ieb.set_date_checked(DATE_UNDEFINED_VAL_STR)
 
                     ie_new = ieb
                     if ieb.get_file_path() in ier_dict:
@@ -166,42 +167,59 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
 
     LOG.critical("BEG - Check")
 
-    i = 0
     integrity_entries = get_integrity_entries(folder, report_file)
     integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
 
     if len(integrity_entries) <= 0:
         LOG.warning("No entry, nothing will be done")
-    else: 
-        limit_age = None
+    else:
+        limit_by_age = None
+        limit_age_date = None
         if age is not None:
             if age >= 0:
-                limit_age = datetime.now() - timedelta(minutes=age)
+                limit_age_date = datetime.now() - timedelta(minutes=age)
             elif age == -1:
-                limit_age = DATE_UNDEFINED_VAL
+                limit_age_date = DATE_UNDEFINED_VAL
             elif age == -2:
-                limit_age = datetime.today()
-            LOG.info("Age limit: " + limit_age.strftime("%Y-%m-%d %H:%M:%S"))
-        
-        limit_item = None
-        if percentage is not None and percentage > 0:
-            limit_item = round(len(integrity_entries) * percentage / 100)
-            LOG.info("Item limit: " + str(limit_item) + " " + str(percentage_threshold))
+                limit_age_date = datetime.today()
 
-        limit_auto_save = None
-        if limit_item is not None:
-            limit_auto_save = limit_item // 10
+            limit_by_age = bisect.bisect(integrity_entries, limit_age_date.strftime(DATE_FORMAT), 0, len(integrity_entries), key=lambda e: e.get_date_checked())
+            LOG.info("Limit item by age: " + str(limit_by_age))
         else:
-            limit_auto_save = len(integrity_entries) // 10
+            LOG.info("Limit item by age: not defined")
+
+        limit_by_percentage = None
+        if percentage is not None and percentage > 0:
+            limit_by_percentage = round(len(integrity_entries) * percentage / 100)
+            limit_by_percentage = min(limit_by_percentage, len(integrity_entries))
+            LOG.info("Limit item by percentage: " + str(limit_by_percentage) + " " + str(percentage_threshold))
+        else:
+            LOG.info("Limit item by percentage: not defined")
+
+        limit = 0
+        if limit_by_age is not None:
+            limit = limit_by_age
+            if limit_by_percentage is not None:
+                if percentage_threshold == 'MIN':
+                    limit = max(limit_by_age, limit_by_percentage)
+                    if (limit_by_age < limit_by_percentage):
+                        LOG.info("Limit item by age changed by limit by percentage from " + str(limit_by_age) + " to " + str(limit_by_percentage))
+                elif percentage_threshold == 'MAX':
+                    limit = min(limit_by_age, limit_by_percentage)
+                    if (limit_by_age > limit_by_percentage):
+                        LOG.info("Limit item by age changed by limit by percentage from " + str(limit_by_age) + " to " + str(limit_by_percentage))
+        elif limit_by_percentage is not None:
+            if percentage_threshold == 'MIN':
+                limit = limit_by_percentage
+        LOG.info("Effective item limit: " + str(limit))
+
+        limit_auto_save = limit // 10
         limit_auto_save = max(limit_auto_save, 50)
 
+        i = 0
         for file in integrity_entries:
-
             if os.path.exists(file.get_file_path()):
-                if (    (limit_age is not None
-                            and file.get_date_checked() <= limit_age.strftime(DATE_FORMAT)) or \
-                        (percentage_threshold is not None and percentage_threshold == 'MIN' \
-                            and limit_item is not None and i < limit_item)):
+                if (i < limit):
                     now = datetime.now().strftime(DATE_FORMAT)
 
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
@@ -213,20 +231,15 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                         sys.exit(EXIT_CODE_ERR_VALIDATION)
 
                     i = i + 1
-                    if (percentage_threshold is not None and percentage_threshold == 'MAX' \
-                            and limit_item is not None and i > limit_item):
-                        LOG.info("Max items reached")
-                        break
-
                     if limit_auto_save > 0 and i % limit_auto_save == 0:
                         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
                 else:
-                    LOG.info("There are no more items satisfying 'age' or 'min-percentage' conditions")
+                    LOG.info("There are no more items satisfying 'age' or 'percentage' conditions")
                     break
 
         integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
-    
+
     LOG.critical("END - Check")
 
 if __name__ == "__main__":
