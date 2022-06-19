@@ -30,13 +30,13 @@ Finally, I wrote a script that fulfils these needs.
 | `--min-percentage <number-percentage>`  | Minimum percentage of collection to check |
 | `--max-percentage <number-percentage>`  | Maximum percentage of collection to check |
 
-To identify files to check, a choice should be made among `--age`, `--min-percentage` and `--max-percentage` options.
+To **identify files to check**, a choice should be made among `--age`, `--min-percentage` and `--max-percentage` options.
 
 `--age` option *can be used alone*. In that case, files not checked since a period of time will be checked. Periode of time must be expressed in minutes. To check files not checked since a week, use for example `--age=10080`. 
 
 `--min-percentage` option *can be used alone*. To check 25% of your collection, use `--min-percentage=25`
 
-`--max-percetage` option's purpose is to temper `--age` option only. `--max-percetage` option *can't be used alone* and must always be used with `--age` option.
+`--max-percetage` option's purpose is to temper `--age` option only. `--max-percetage` option *can't be used alone*.
 
 `--age` option could be used in combination with `--min-percentage` or `--max-percentage`. 
 * When `--age` option is combined with `--min-percentage` option, **at least the minimum** specified percentage of collection will be checked or **maybe more** if number of files identified by ``--age`` is larger. 
@@ -46,14 +46,14 @@ For example,
 
 | Files identified by `--age`  | Files identified by `--min-percentage`  | Files to check |
 | --------                     | --------                                | --------  |
-| 357 files                    | **761 files**                           | 761 files |
-| **860 files**                | 252 files                               | 860 files |
+| 357 files                    | **761 files**                           | **761 files** since 761 > 357 |
+| **860 files**                | 252 files                               | **860 files** since 860 > 252 |
 
 
 | Files identified by `--age`  | Files identified by `--max-percentage`  | Files to check |
 | --------                     | --------                                | -------- |
-| 593 files                    | **247 files**                           | 247 files |
-| **145 files**                | 465 files                               | 145 files |
+| 593 files                    | **247 files**                           | **247 files** since 247 < 593 |
+| **145 files**                | 465 files                               | **145 files** since 145 < 465 |
 
 
 ## License
