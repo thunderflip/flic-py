@@ -156,8 +156,10 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
     integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
 
     if len(integrity_entries) <= 0:
-        LOG.warning("No entry, nothing will be done")
+        LOG.warning("No item, nothing will be done")
     else:
+        LOG.info("Total item(s): " + str(len(integrity_entries)))
+
         limit_by_age = None
         if age is not None:
             limit_age_date = None
@@ -169,17 +171,17 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                 limit_age_date = datetime.today()
 
             limit_by_age = bisect.bisect(integrity_entries, limit_age_date.strftime(DATE_FORMAT), 0, len(integrity_entries), key=lambda e: e.get_date_checked())
-            LOG.info("Limit item by age: " + str(limit_by_age))
+            LOG.info("Limit item(s) by age: " + str(limit_by_age))
         else:
-            LOG.info("Limit item by age: not defined")
+            LOG.info("Limit item(s) by age: not defined")
 
         limit_by_percentage = None
         if percentage is not None and percentage > 0:
             limit_by_percentage = round(len(integrity_entries) * percentage / 100)
             limit_by_percentage = min(limit_by_percentage, len(integrity_entries))
-            LOG.info("Limit item by percentage: " + str(limit_by_percentage) + " " + str(percentage_threshold))
+            LOG.info("Limit item(s) by percentage: " + str(limit_by_percentage) + " " + str(percentage_threshold))
         else:
-            LOG.info("Limit item by percentage: not defined")
+            LOG.info("Limit item(s) by percentage: not defined")
 
         limit = 0
         if limit_by_age is not None:
@@ -196,7 +198,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         elif limit_by_percentage is not None:
             if percentage_threshold == 'MIN':
                 limit = limit_by_percentage
-        LOG.warning("Effective item limit: " + str(limit))
+        LOG.warning("Effective item(s) limit: " + str(limit))
 
         limit_auto_save = limit // 10
         limit_auto_save = max(limit_auto_save, 50)
@@ -226,7 +228,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
 
     date_end = datetime.now()
-    LOG.error("Elapsed time : " + str(date_end - date_begin) + " for " + str(limit) + " item(s)")
+    LOG.error("Elapsed time: " + str(date_end - date_begin) + " for " + str(limit) + " item(s)")
     LOG.error("END - Check")
 
 if __name__ == "__main__":
