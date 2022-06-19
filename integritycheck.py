@@ -38,13 +38,13 @@ def usage(argv_0, exit_val):
     print("A python script to check FLAC integrity\n")
     print("Usage: %s [-h  || --help] --flac <flac-path> --folder <folder-path> --report <report-path> [--age <number-minutes>] [--min-percentage <number-percentage> || --max-percentage <number-percentage>]" % argv_0)
 
-    print("\t-h / --help        :    This HELP.")
-    print("\t--flac             :    Path to the FLAC executable.")    
-    print("\t--folder           :    Root FOLDER path for recursive search.")
-    print("\t--report           :    Path to the REPORT file.")
-    print("\t--age              :    AGE minimum since last check.")
-    print("\t--min-percentage   :    MINimum PERCENTAGE to check.")
-    print("\t--max-percentage   :    MAXimum PERCENTAGE to check.")
+    print("\t-h / --help        : Shows this help")
+    print("\t--flac             : Path to the flac executable")    
+    print("\t--folder           : Root folder path to FLAC collection for recursive files search")
+    print("\t--report           : Path to the report file")
+    print("\t--age              : Age in minutes to identify files to check")
+    print("\t--min-percentage   : Minimum percentage of collection to check")
+    print("\t--max-percentage   : Maximum percentage of collection to check")
 
     sys.exit(exit_val)  
   
