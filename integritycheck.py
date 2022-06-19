@@ -9,22 +9,6 @@ from model.integrityentry import IntegrityEntry
 from model.integrityfile import IntegrityFile
 from flac.flacoperation import FlacOperation
 
-    # ANCIENNETÉ + MAX=100  --> ANCIENNETÉ  
-    # ANCIENNETÉ + MIN=0    --> ANCIENNETÉ
-    # Tous les fichiers dépassant l'ancienneté sont vérifiés
-    #
-    # ANCIENNETÉ + MIN<100  --> MAX(ANCIENNETÉ, MIN)
-    # Tous les fichiers dépassant l'ancienneté sont vérifiés
-    # Un minimum de x% des fichiers sont vérifiés
-    #
-    # ANCIENNETÉ + MAX<100  --> MIN(ANCIENNETÉ, MAX)
-    # Un maximum de x% des fichiers sont vérifés    
-    # Les fichiers dépassant l'ancienneté sont vérifiés 
-    # Tous les fichiers dépassant l'ancienneté pourraient ne pas être vérifiés.
-    # 
-    # ANCIENNETÉ + MIN=100  --> MIN=100
-    # Tous les fichiers sont vérifiés
-
 
 DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S"
 DATE_UNDEFINED_VAL          = datetime(1900, 1, 1)
@@ -101,7 +85,7 @@ def main(argv):
             elif opt == "--min-percentage":
                 try:
                     if (percentage_limit is not None):
-                        LOG.critical("A 'xxx-percentage' argument has already been provided")
+                        LOG.error("A 'xxx-percentage' argument has already been provided")
                         sys.exit(EXIT_CODE_ERR_OPTION)
                     percentage = int(arg)
                     percentage_limit = 'MIN'
@@ -111,7 +95,7 @@ def main(argv):
             elif opt == "--max-percentage":
                 try:                
                     if (percentage_limit is not None):
-                        LOG.critical("A 'xxx-percentage' option has already been provided")
+                        LOG.error("A 'xxx-percentage' option has already been provided")
                         sys.exit(EXIT_CODE_ERR_OPTION)
                     percentage = int(arg)
                     percentage_limit = 'MAX'
@@ -165,7 +149,8 @@ def get_integrity_entries(folder: str, report_file: str):
 
 def check(flac_path, folder, report_file, age, percentage, percentage_threshold):
 
-    LOG.critical("BEG - Check")
+    LOG.error("BEG - Check")
+    date_begin = datetime.now()
 
     integrity_entries = get_integrity_entries(folder, report_file)
     integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
@@ -203,25 +188,26 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                 if percentage_threshold == 'MIN':
                     if (limit_by_age < limit_by_percentage):
                         limit = limit_by_percentage
-                        LOG.info("Limit item by age changed by limit by percentage from " + str(limit_by_age) + " to " + str(limit_by_percentage))
+                        LOG.info("Limit item 'by age' changed by limit 'by percentage' from " + str(limit_by_age) + " to " + str(limit_by_percentage))
                 elif percentage_threshold == 'MAX':
                     if (limit_by_age > limit_by_percentage):
                         limit = limit_by_percentage
-                        LOG.info("Limit item by age changed by limit by percentage from " + str(limit_by_age) + " to " + str(limit_by_percentage))
+                        LOG.info("Limit item 'by age' changed by limit 'by percentage' from " + str(limit_by_age) + " to " + str(limit_by_percentage))
         elif limit_by_percentage is not None:
             if percentage_threshold == 'MIN':
                 limit = limit_by_percentage
-        LOG.info("Effective item limit: " + str(limit))
+        LOG.warning("Effective item limit: " + str(limit))
 
         limit_auto_save = limit // 10
         limit_auto_save = max(limit_auto_save, 50)
 
         i = 0
+        nb_format = "{0:"+str(len(str(limit)))+"d}"
         for file in integrity_entries:
             if (i < limit):
                 if os.path.exists(file.get_file_path()):
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
-                    LOG.info("Verifying: " + file.get_file_path())
+                    LOG.warning("Verifying (" + nb_format.format(i + 1) + "/" + nb_format.format(limit) + "): " + file.get_file_path())
                     if flac_op.test():
                         now = datetime.now().strftime(DATE_FORMAT)
                         file.set_date_checked(now)
@@ -230,7 +216,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                         sys.exit(EXIT_CODE_ERR_VALIDATION)
 
                 i = i + 1
-                if limit_auto_save > 0 and i % limit_auto_save == 0:
+                if i % limit_auto_save == 0:
                     IntegrityFile.write_integrity_entries(integrity_entries, report_file)
             else:
                 LOG.info("There are no more items satisfying 'age' or 'percentage' conditions")
@@ -239,7 +225,9 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
         IntegrityFile.write_integrity_entries(integrity_entries, report_file)
 
-    LOG.critical("END - Check")
+    date_end = datetime.now()
+    LOG.error("Elapsed time : " + str(date_end - date_begin) + " for " + str(limit) + " item(s)")
+    LOG.error("END - Check")
 
 if __name__ == "__main__":
     main(sys.argv)
