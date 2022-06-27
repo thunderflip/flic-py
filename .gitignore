@@ -1,3 +1,6 @@
 /.vscode
+/.venv
+/build
+/dist
 /model/__pycache__
 /flac/__pycache__

@@ -150,6 +150,8 @@ def get_integrity_entries(folder: str, report_file: str):
 def check(flac_path, folder, report_file, age, percentage, percentage_threshold):
 
     LOG.error("BEG - Check")
+
+    limit = 0
     date_begin = datetime.now()
 
     integrity_entries = get_integrity_entries(folder, report_file)
@@ -159,6 +161,11 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
         LOG.warning("No item, nothing will be done")
     else:
         LOG.info("Total item(s): " + str(len(integrity_entries)))
+
+        checked_date_oldest = integrity_entries[ 0].get_date_checked()
+        checked_date_newest = integrity_entries[-1].get_date_checked()
+        LOG.info("Oldest checked item: " + checked_date_oldest + " / " + str( round( (datetime.now() - datetime.strptime(checked_date_oldest, DATE_FORMAT)).total_seconds() / 60 )) + " minutes")
+        LOG.info("Newest checked item: " + checked_date_newest + " / " + str( round( (datetime.now() - datetime.strptime(checked_date_newest, DATE_FORMAT)).total_seconds() / 60 )) + " minutes")
 
         limit_by_age = None
         if age is not None:
@@ -209,7 +216,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
             if (i < limit):
                 if os.path.exists(file.get_file_path()):
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
-                    LOG.warning("Verifying (" + nb_format.format(i + 1) + "/" + nb_format.format(limit) + "): " + file.get_file_path())
+                    LOG.warning("Verifying (" + nb_format.format(i + 1) + "/" + nb_format.format(limit) + " - " + "{0:6.2f}".format((i+1) / limit * 100) + "%): " + file.get_file_path())
                     if flac_op.test():
                         now = datetime.now().strftime(DATE_FORMAT)
                         file.set_date_checked(now)
