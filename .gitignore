@@ -4,3 +4,5 @@
 /dist
 /model/__pycache__
 /flac/__pycache__
+/*.spec
+/version-file.txt
