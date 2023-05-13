@@ -10,7 +10,7 @@ from model.integrityfile import IntegrityFile
 from flac.flacoperation import FlacOperation
 
 
-DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S"
+DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S.%f"
 DATE_UNDEFINED_VAL          = datetime(1900, 1, 1)
 DATE_UNDEFINED_VAL_STR      = DATE_UNDEFINED_VAL.strftime(DATE_FORMAT)
 
@@ -209,6 +209,9 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
 
         limit_auto_save = limit // 10
         limit_auto_save = max(limit_auto_save, 50)
+
+        if (limit >= len(integrity_entries)):
+            integrity_entries.sort(key=lambda e: e.get_file_path(), reverse=False)
 
         i = 0
         nb_format = "{0:"+str(len(str(limit)))+"d}"
