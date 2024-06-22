@@ -34,9 +34,9 @@ def init_logging():
 
 def usage(argv_0, exit_val):
 
-    print("FLAC Collection Integrity Checker\n")
+    print("FLAC Integrity Check\n")
 
-    print("A python script to check FLAC integrity\n")
+    print("A python script for FLAC Integrity Check\n")
     print("Usage: %s [-h  || --help] --flac <flac-path> --folder <folder-path> --report <report-path> [--age <number-minutes>] [--min-percentage <number-percentage> || --max-percentage <number-percentage>]" % argv_0)
 
     print("\t-h / --help        : Shows this help")

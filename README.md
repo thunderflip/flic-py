@@ -1,34 +1,31 @@
-# FLAC Collection Integrity Checker
+# FLAC Integrity Check
 
 ## Genesis
 
-What is FLAC ? The [official FLAC site](https://pages.github.com/) says :
+[FLAC](https://pages.github.com/) is the audio format of choice for preserving pristine audio quality. But even the most beautiful melody can be marred by a corrupted file. File integrity is just as important as audio quality. Wouldn't you agree?
 
-> FLAC stands for Free Lossless Audio Codec, an audio format similar to MP3, but lossless, meaning that audio is compressed in FLAC without any loss in quality.
+The FLAC format uses a digital signature to ensure the integrity of the audio data. This signature allows you to verify if the audio data still matches the original.
 
-If you consider FLAC, you should be concerned by music quality. To preserve music quality or even just to preserve files, you should also be concerned by file integrity. Aren't you ?
+Unfortunately, the tools built into the FLAC format don't make it easy to check an entire collection of files for integrity. As my FLAC collection grew to more than 1000 albums, I needed a more comprehensive tool. Here's what I was looking for:
 
-There is a bunch of handy tools to manipulate FLAC files. I've been using [Trader's Little Helper](http://tlh.easytree.org/) since a long time. Trader's Little Helper could notably check FLAC integrity of files in a directory (but not in subdirectories). 
+* check the integrity of new files added to a directory and its subdirectories.
+* check the integrity of modified files in a directory and its subdirectories.
+* perform regular integrity checks, starting with the oldest checked file first.
 
-As my FLAC collection growned up, I needed a global tool to check my files. I wanted :
+Finally, I wrote a script that fulfils these needs. Want to keep your FLAC collection flawless too? Download the script here and start using it!
 
-* to check integrity of new files added in a directory and his subdirectories ;
-* to check integrity of files modified in a directory and his subdirectories ;
-* to check integrity of files regularly, beginning with the oldest checked file first.
-
-Finally, I wrote a script that fulfils these needs.
 
 ## Usage
 
 | Option                     | Description   |
 | --------                   | -------- |
 | `--help`                   | Shows usage help |
-| `--flac <flac-path>`       | Path to the `flac` executable (**mandatory**) |
-| `--folder <folder>`        | Root folder path to FLAC collection for recursive files search (**mandatory**) |
-| `--report <report-path>`   | Path to the report file (**mandatory**) |
-| `--age <number-minutes>`   | Age in minutes to identify files to check |
-| `--min-percentage <number-percentage>`  | Minimum percentage of collection to check |
-| `--max-percentage <number-percentage>`  | Maximum percentage of collection to check |
+| `--flac <path>`       | Path to the `flac` executable (**mandatory**) |
+| `--folder <path>`        | Root folder path to FLAC collection for recursive files search (**mandatory**) |
+| `--report <path>`   | Path to the report file (**mandatory**) |
+| `--age <number>`   | Age in minutes to identify files to check |
+| `--min-percentage <number>`  | Minimum percentage of collection to check |
+| `--max-percentage <number>`  | Maximum percentage of collection to check |
 
 To **identify files to check**, a choice should be made among `--age`, `--min-percentage` and `--max-percentage` options.
 
