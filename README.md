@@ -8,11 +8,13 @@ The FLAC format uses a digital signature to ensure the integrity of the audio da
 
 Unfortunately, the tools built into the FLAC format don't make it easy to check an entire collection of files for integrity. As my FLAC collection grew to more than 1000 albums, I needed a more comprehensive tool. Here's what I was looking for:
 
-* check the integrity of new files added to a directory and its subdirectories.
-* check the integrity of modified files in a directory and its subdirectories.
-* perform regular integrity checks, starting with the oldest checked file first.
+* check the integrity of new files added to a directory and its subdirectories
+* check the integrity of modified files in a directory and its subdirectories
+* perform regular integrity checks, starting with the oldest checked file first
 
-Finally, I wrote a script that fulfils these needs. Want to keep your FLAC collection flawless too? Download the script here and start using it!
+Finally, I wrote a script that fulfils these needs. 
+
+Want to keep your FLAC collection flawless too? Download the script and start using it!
 
 
 ## Usage
