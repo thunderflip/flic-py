@@ -1,12 +1,10 @@
-# FLAC Integrity Check
+# FLAC Library Integrity Check
 
 ## Genesis
 
-[FLAC](https://pages.github.com/) is the audio format of choice for preserving pristine audio quality. But even the most beautiful melody can be marred by a corrupted file. File integrity is just as important as audio quality. Wouldn't you agree?
+[FLAC](https://pages.github.com/) is the audio format of choice for preserving pristine audio quality. But even the most beautiful melody can be marred by a corrupted file. That's why FLAC format embeds a cryptographic hash of the audio data. This hash acts as a fingerprint for verifying the integrity of the data. A `test` option can recalculate this hash and compare it to the stored value, confirming unaltered audio data.
 
-The FLAC format uses a digital signature to ensure the integrity of the audio data. This signature allows you to verify if the audio data still matches the original.
-
-Unfortunately, the tools built into the FLAC format don't make it easy to check an entire collection of files for integrity. As my FLAC collection grew to more than 1000 albums, I needed a more comprehensive tool. Here's what I was looking for:
+Unfortunately, the command-line tools in the FLAC reference implementation don't make it easy to check an entire library of files for integrity. As my FLAC collection grew to more than 1000 albums, I needed a more comprehensive tool. Here's what I was looking for:
 
 * check the integrity of new files added to a directory and its subdirectories
 * check the integrity of modified files in a directory and its subdirectories
@@ -14,7 +12,7 @@ Unfortunately, the tools built into the FLAC format don't make it easy to check 
 
 Finally, I wrote a script that fulfils these needs. 
 
-Want to keep your FLAC collection flawless too? Download the script and start using it!
+Want to keep your FLAC library flawless too? Download the script and start using it!
 
 
 ## Usage
