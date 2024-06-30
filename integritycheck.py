@@ -233,8 +233,9 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                 LOG.info("There are no more items satisfying 'age' or 'percentage' conditions")
                 break
 
-        integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
-        IntegrityFile.write_integrity_entries(integrity_entries, report_file)
+        if i != 0:
+            integrity_entries.sort(key=lambda e: e.get_date_checked(), reverse=False)
+            IntegrityFile.write_integrity_entries(integrity_entries, report_file)
 
     date_end = datetime.now()
     LOG.error("Elapsed time: " + str(date_end - date_begin) + " for " + str(limit) + " item(s)")
