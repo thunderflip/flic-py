@@ -10,10 +10,8 @@ from model.integrityfile import IntegrityFile
 from flac.flacoperation import FlacOperation
 
 
-
-DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S.%f"
+DATE_FORMAT                 = "%Y-%m-%d %H:%M:%S"
 DATE_UNDEFINED_VAL          = datetime(1900, 1, 1)
-DATE_UNDEFINED_VAL_STR      = DATE_UNDEFINED_VAL.strftime(DATE_FORMAT)
 
 EXIT_CODE_OK                =  0
 EXIT_CODE_ERR_OPTION        = -1
@@ -134,13 +132,13 @@ def get_integrity_entries(folder: str, report_file: str):
                     ieb.set_file_path(file_path)
                     ieb.set_file_size(os.path.getsize(file_path))
                     ieb.set_file_modtime(os.path.getmtime(file_path))
-                    ieb.set_date_checked(DATE_UNDEFINED_VAL_STR)
+                    ieb.set_date_checked(DATE_UNDEFINED_VAL)
 
                     ie_new = ieb
                     if ieb.get_file_path() in ier_dict:
                         ier = ier_dict[ieb.get_file_path()]
-                        if ier.get_file_size() == str(ieb.get_file_size()):
-                            if ier.get_file_modtime() == str(ieb.get_file_modtime()):
+                        if ier.get_file_size() == ieb.get_file_size():
+                            if ier.get_file_modtime() == ieb.get_file_modtime():
                                 ie_new = ier
 
                     integrity_entries.append(ie_new)
@@ -165,8 +163,8 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
 
         checked_date_oldest = integrity_entries[ 0].get_date_checked()
         checked_date_newest = integrity_entries[-1].get_date_checked()
-        LOG.info("Oldest checked item: " + checked_date_oldest + " / " + str( round( (datetime.now() - datetime.strptime(checked_date_oldest, DATE_FORMAT)).total_seconds() / 60 )) + " minutes")
-        LOG.info("Newest checked item: " + checked_date_newest + " / " + str( round( (datetime.now() - datetime.strptime(checked_date_newest, DATE_FORMAT)).total_seconds() / 60 )) + " minutes")
+        LOG.info("Oldest checked item: " + checked_date_oldest.strftime(DATE_FORMAT) + " / " + str( round( (datetime.now() - checked_date_oldest).total_seconds() / 60 ) ) + " minutes")
+        LOG.info("Newest checked item: " + checked_date_newest.strftime(DATE_FORMAT) + " / " + str( round( (datetime.now() - checked_date_newest).total_seconds() / 60 ) ) + " minutes")
 
         limit_by_age = None
         if age is not None:
@@ -178,7 +176,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
             elif age == -2:
                 limit_age_date = datetime.today()
 
-            limit_by_age = bisect.bisect(integrity_entries, limit_age_date.strftime(DATE_FORMAT), 0, len(integrity_entries), key=lambda e: e.get_date_checked())
+            limit_by_age = bisect.bisect(integrity_entries, limit_age_date, 0, len(integrity_entries), key=lambda e: e.get_date_checked())
             LOG.info("Limit item(s) by age: " + str(limit_by_age))
         else:
             LOG.info("Limit item(s) by age: not defined")
@@ -222,7 +220,7 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                     flac_op = FlacOperation(flac_path, None, file.get_file_path())
                     LOG.warning("Verifying (" + nb_format.format(i + 1) + "/" + nb_format.format(limit) + " - " + "{0:6.2f}".format((i+1) / limit * 100) + "%): " + file.get_file_path())
                     if flac_op.test():
-                        now = datetime.now().strftime(DATE_FORMAT)
+                        now = datetime.now()
                         file.set_date_checked(now)
                     else:
                         LOG.critical("KO")

@@ -1,4 +1,5 @@
 import csv
+from datetime import datetime
 import os
 import shutil
 import tempfile
@@ -7,6 +8,8 @@ from model.integrityentry import IntegrityEntry
 
 
 class IntegrityFile:
+
+    DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
     FIELD_NAMES = [
         IntegrityEntry.FILE_PATH,
@@ -26,7 +29,12 @@ class IntegrityFile:
         if rows is not None:
             integrity_entry_list = list()
             for row in rows:
-                integrity = IntegrityEntry(row)
+                integrity = IntegrityEntry()
+                integrity.set_file_path(row[IntegrityEntry.FILE_PATH])
+                integrity.set_file_size(int(row[IntegrityEntry.FILE_SIZE]))
+                integrity.set_file_modtime(float(row[IntegrityEntry.FILE_MODTIME]))
+                integrity.set_date_checked(datetime.strptime(row[IntegrityEntry.DATE_CHECKED], IntegrityFile.DATE_FORMAT))
+
                 integrity_entry_list.append(integrity)
 
         return integrity_entry_list
@@ -36,13 +44,12 @@ class IntegrityFile:
         if integrity_entry_list is not None:
             rows = list()
             for integrity_entry in integrity_entry_list:
-                data = integrity_entry.get_data()
                 row = dict()
-                for key in IntegrityFile.FIELD_NAMES:
-                    if key in data:
-                        row[key] = data[key]
-                    else:
-                        row[key] = None
+                row[IntegrityEntry.FILE_PATH] = integrity_entry.get_file_path()
+                row[IntegrityEntry.FILE_SIZE] = integrity_entry.get_file_size()
+                row[IntegrityEntry.FILE_MODTIME] = integrity_entry.get_file_modtime()
+                row[IntegrityEntry.DATE_CHECKED] = integrity_entry.get_date_checked().strftime(IntegrityFile.DATE_FORMAT)
+
                 rows.append(row)
 
             IntegrityFile.write_rows(rows, file_path)
