@@ -2,9 +2,9 @@
 
 ## Genesis
 
-[FLAC](https://pages.github.com/) is the audio format of choice for preserving pristine audio quality. But even the most beautiful melody can be marred by a corrupted file. That's why FLAC format embeds a cryptographic hash of the audio data. This hash acts as a fingerprint for verifying the integrity of the data. A `test` option can recalculate this hash and compare it to the stored value, confirming unaltered audio data.
+[FLAC](https://pages.github.com/) is the audio format of choice for preserving pristine audio quality. But even the most beautiful melody can be marred by a corrupted file. That's why FLAC format embeds a cryptographic hash of the audio data. This hash acts as a fingerprint for verifying the integrity of the data. The FLAC reference implementation's command-line tools provides a `test` option that can recalculate this hash and compare it to the stored value, confirming unaltered audio data. 
 
-Unfortunately, the command-line tools in the FLAC reference implementation don't make it easy to check an entire library of files for integrity. As my FLAC collection grew to more than 1000 albums, I needed a more comprehensive tool. Here's what I was looking for:
+Unfortunately, these tools don't make it easy to `test` an entire library of files. As my FLAC collection grew to more than 1000 albums, I needed a more comprehensive tool. Here's what I was looking for:
 
 * check the integrity of new files added to a directory and its subdirectories
 * check the integrity of modified files in a directory and its subdirectories
