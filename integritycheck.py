@@ -18,6 +18,7 @@ EXIT_CODE_ERR_OPTION        = -1
 EXIT_CODE_ERR_VALIDATION    = -2
 
 LOG                         = None
+MODTIME_TOLERANCE           = 1000
 
 
 def init_logging():
@@ -128,18 +129,21 @@ def get_integrity_entries(folder: str, report_file: str):
                 if file_extension.lower() in (".flac"):
                     file_path = os.path.join(root, file)
 
-                    ieb = IntegrityEntry()
-                    ieb.set_file_path(file_path)
-                    ieb.set_file_size(os.path.getsize(file_path))
-                    ieb.set_file_modtime(os.path.getmtime(file_path))
-                    ieb.set_date_checked(DATE_UNDEFINED_VAL)
+                    ied = IntegrityEntry()
+                    ied.set_file_path(file_path)
+                    ied.set_file_size(os.path.getsize(file_path))
+                    ied.set_file_modtime(os.path.getmtime(file_path))
+                    ied.set_date_checked(DATE_UNDEFINED_VAL)
 
-                    ie_new = ieb
-                    if ieb.get_file_path() in ier_dict:
-                        ier = ier_dict[ieb.get_file_path()]
-                        if ier.get_file_size() == ieb.get_file_size():
-                            if ier.get_file_modtime() == ieb.get_file_modtime():
+                    ie_new = ied
+                    if ied.get_file_path() in ier_dict:
+                        ier = ier_dict[ied.get_file_path()]
+                        if ier.get_file_size() == ied.get_file_size():
+                            diff_time = abs(ier.get_file_modtime() - ied.get_file_modtime())
+                            if diff_time <= MODTIME_TOLERANCE:
                                 ie_new = ier
+                                if diff_time != 0:
+                                    ie_new.set_file_modtime(ied.get_file_modtime())
 
                     integrity_entries.append(ie_new)
 

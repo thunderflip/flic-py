@@ -55,4 +55,5 @@ For example,
 
 ## License
 
-This project is licensed under the terms of the **MIT license**. Check [LICENCE file](/LICENCE.md) included in this package for more information.
+This project is licensed under the terms of the **MIT license**. 
+Check [LICENCE file](/LICENCE.md) included in this package for more information.
