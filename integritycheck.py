@@ -19,6 +19,7 @@ EXIT_CODE_ERR_VALIDATION    = -2
 
 LOG                         = None
 MODTIME_TOLERANCE           = 1000
+MINUTES_BETWEEN_AUTO_SAVE   = 3
 
 
 def init_logging():
@@ -210,13 +211,11 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                 limit = limit_by_percentage
         LOG.warning("Effective item(s) limit: " + str(limit))
 
-        limit_auto_save = limit // 10
-        limit_auto_save = max(limit_auto_save, 50)
-
         if (limit >= len(integrity_entries)):
             integrity_entries.sort(key=lambda e: e.get_file_path(), reverse=False)
 
         i = 0
+        last_save = datetime.now()
         nb_format = "{0:"+str(len(str(limit)))+"d}"
         for file in integrity_entries:
             if (i < limit):
@@ -231,8 +230,10 @@ def check(flac_path, folder, report_file, age, percentage, percentage_threshold)
                         sys.exit(EXIT_CODE_ERR_VALIDATION)
 
                 i = i + 1
-                if i % limit_auto_save == 0:
+
+                if (datetime.now() - last_save).total_seconds() / 60 > MINUTES_BETWEEN_AUTO_SAVE:
                     IntegrityFile.write_integrity_entries(integrity_entries, report_file)
+                    last_save = datetime.now()
             else:
                 LOG.info("There are no more items satisfying 'age' or 'percentage' conditions")
                 break
