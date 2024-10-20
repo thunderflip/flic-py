@@ -19,7 +19,7 @@ EXIT_CODE_ERR_VALIDATION    = -2
 
 LOG                         = None
 MODTIME_TOLERANCE           = 1000
-MINUTES_BETWEEN_AUTO_SAVE   = 3
+MINUTES_BETWEEN_AUTO_SAVE   = 1
 
 
 def init_logging():

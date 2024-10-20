@@ -10,9 +10,9 @@ Unfortunately, these tools don't make it easy to `test` an entire library of fil
 * check the integrity of modified files in a directory and its subdirectories
 * perform regular integrity checks, starting with the oldest checked file first
 
-Finally, I wrote a script that fulfils these needs. 
+Finally, I wrote a program that fulfils these needs. 
 
-Want to keep your FLAC library flawless too? Download the script and start using it!
+Want to keep your FLAC library flawless too? Download the code and start using it!
 
 
 ## Usage
